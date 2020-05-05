@@ -4,13 +4,9 @@ class Game{
    this.container;
    this.camera;
    this.renderer;
-   this.controls;
+   this.controlsl;
    this.scene;
-   this.model;
-   this.assetsPath = 'assets';
-   this.modelName='/';
-   this.models=['claire.fbx','idle.fbx','john.fbx'];
-   //var x = this.models[0];
+
    this.container = document.querySelector('#scene-container');
    //this.container.style.height = '100%';
    //document.body.appendChild(this.container);
@@ -22,9 +18,9 @@ class Game{
   init()
   {
     this.camera = new THREE.PerspectiveCamera(45,this.container.clientWidth/this.container.clientHeight,1,2000);
-    this.camera.position.set(0,200,600);
+    this.camera.position.set(112,100,400);
     this.scene = new THREE.Scene();
-    this.scene.background= new THREE.Color('#4d4940');
+    this.scene.background= new THREE.Color('0xa0a0a0');
 
 		let light = new THREE.HemisphereLight( 0xffffff, 0x444444 );
 		light.position.set( 0, 200, 0 );
@@ -39,91 +35,25 @@ class Game{
 		light.shadow.camera.right = 120;
 		this.scene.add( light );
     const game=this;
-    var x = game.models[1];
-    console.log(x);
-    this.createMesh();    
-    this.renderCam();
-    //this.loadModel();
-    this.animate();
-   
-
-  }
-  changeModel(clicked)//clicked get the id from html call
-  {
-    const game=this;
-    //console.log(clicked);
-    game.assetsPath="assets";
-    game.str='/'
-    if(clicked==1)
-    {
-      game.modelName = game.str.concat(game.models[0]);
-    }                                                                 //Loading the model based on button id 
-    else if(clicked == 2)
-    {
-      game.modelName = game.str.concat(game.models[1]);
-    }
-    else if(clicked == 3)
-    {
-      game.modelName = game.str.concat(game.models[2]);
-    }
     
-    game.assetsPath = game.assetsPath.concat(game.modelName);
-    console.log(game.assetsPath);
-    this.removeModel();
-    this.loadModel();
-  }
-  removeModel()
-  {
-    console.log(this.model);
-    this.scene.remove(this.model);
-  }
-
-  createMesh()
-  {
-    // ground
-		var mesh = new THREE.Mesh( new THREE.CircleGeometry( 100, 50 ), new THREE.MeshPhongMaterial( 
-      { 
-        color: '#c0c736', 
-        depthWrite: false
-       } ) );
+     // ground
+		var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 4000, 4000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
 		mesh.rotation.x = - Math.PI / 2;
 		//mesh.position.y = -100;
 		mesh.receiveShadow = true;
 		this.scene.add( mesh );
 
-		/*var grid = new THREE.GridHelper( 500, 40, 0x000000, 0x000000 );
-		grid.position.y = -100;
+		var grid = new THREE.GridHelper( 4000, 40, 0x000000, 0x000000 );
+		//grid.position.y = -100;
 		grid.material.opacity = 0.2;
 		grid.material.transparent = true;
-    this.scene.add( grid );   */
-  }
-
-  loadModel()
-  {
+		this.scene.add( grid );   
     
-    const loader = new THREE.FBXLoader();
-    const game=this;
-    //game.assetsPath = game.assetsPath.concat(game.modelName);
-    //console.log(game.assetsPath);
-    loader.load( `${this.assetsPath}`, function ( object ) {
-    console.log(object);
-    game.model = object;
-    console.log(game.model);
-    object.traverse( function ( child ) {
+    game.renderCam();
+    game.render();
+    game.loadModel();
 
-      if ( child.isMesh ) {
-
-        child.castShadow = true;
-        child.receiveShadow = true;
-
-      }
-     
-    } );
-    game.scene.add(object);
-    });
-    
   }
-
 
   //This script is for rendering the scene
   renderCam()
@@ -132,17 +62,33 @@ class Game{
 		this.renderer.setPixelRatio( window.devicePixelRatio );
 		this.renderer.setSize( this.container.clientWidth, this.container.clientHeight );
 		this.renderer.shadowMap.enabled = true;
-    this.container.appendChild( this.renderer.domElement ); 
-    this.controls= new THREE.OrbitControls(this.camera,this.renderer.domElement);
-    this.controls.minDistance=10;
-    this.controls.maxDistance = 700;
-    this.controls.update();
+		this.container.appendChild( this.renderer.domElement );
   }
 
-  animate()
+  render()
   {
     const game = this;
-    requestAnimationFrame(function(){game.animate();});
-    game.renderer.render(this.scene,this.camera);
+    this.renderer.render(this.scene,this.camera);
+  }
+
+  //Here is the script for loading my 3D object
+  loadModel()
+  {
+    const game = this;
+    game.loader = new THREE.FBXLoader();
+    game.loader.load('../assets/boy.fbx',function(object){
+      game.mixer = new THREE.AnimationMixer(object);
+      game.action = game.mixer.clipAction(object.animations[0]);
+      game.action.play();
+
+      object.traverse(function (child)
+      {
+        if(child.isMesh){
+          child.castShadow = true;
+          child.receieveShadow = true;
+        }
+      });
+    });
+
   }
 }
